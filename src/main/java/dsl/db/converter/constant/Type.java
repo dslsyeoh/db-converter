@@ -5,7 +5,7 @@
 
 package dsl.db.converter.constant;
 
-public enum  Type
+public enum Type
 {
     BOOLEAN,
     INTEGER,
