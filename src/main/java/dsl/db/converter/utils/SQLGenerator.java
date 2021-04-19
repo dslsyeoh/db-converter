@@ -6,6 +6,7 @@
 package dsl.db.converter.utils;
 
 import dsl.db.converter.constant.Type;
+import dsl.db.converter.object.DatabaseObject;
 
 import javax.activation.UnsupportedDataTypeException;
 import java.sql.Date;
@@ -14,28 +15,30 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class SQLGenerator
 {
     public SQLGenerator() {}
 
-    public static String generateSQL(String tableName, List<String> columnNames, List<Object> data)
+    public static String generateSQL(DatabaseObject dbObject)
     {
-        String columns = String.join(", ", columnNames);
-        String params = data.stream().map(s -> "?").collect(Collectors.joining(", "));
+        String columnNames = String.join(", ", dbObject.getColumnNames());
+        String params = IntStream.range(0, dbObject.getDataSize()).mapToObj(i -> "?").collect(Collectors.joining(", "));
 
-        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, params);
-        System.out.println("SQL: " + sql);
+        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", dbObject.getTableName(), columnNames, params);
+
+        System.out.println("Generated SQL: " + sql);
 
         return sql;
     }
 
-    public static PreparedStatement prepareStatement(PreparedStatement statement, List<Object> data)
+    public static PreparedStatement prepareStatement(PreparedStatement statement, List<String> dataTypes, List<Object> data)
     {
         for (int idx = 0; idx < data.size(); idx++)
         {
             Object value = data.get(idx);
-            Type type = TypeChecker.getType(value);
+            Type type = Type.parse(dataTypes.get(idx));
 
             if(Objects.nonNull(type))
             {
@@ -58,13 +61,13 @@ public final class SQLGenerator
         String value = String.valueOf(object);
         switch (type)
         {
-            case STRING:
-            case CHARACTER:
-            case LONG_TEXT:
+            case VARCHAR:
+            case CHAR:
+            case TEXT:
                 statement.setString(position, value);
                 break;
             case INTEGER:
-                statement.setInt(position, Integer.parseInt(value));
+                statement.setInt(position, (int) Double.parseDouble(value));
                 break;
             case DOUBLE:
                 statement.setDouble(position, Double.parseDouble(value));
