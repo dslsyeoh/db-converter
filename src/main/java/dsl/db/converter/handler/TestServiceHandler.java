@@ -11,17 +11,20 @@ import dsl.db.converter.repository.TestRepository;
 import dsl.db.converter.service.TestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service("testService")
+@Transactional
 public class TestServiceHandler implements TestService
 {
     @Autowired
     private TestRepository repository;
 
     @Override
+    @Transactional(readOnly = true)
     public void list()
     {
         List<TestEntity> entities = repository.findAll();
