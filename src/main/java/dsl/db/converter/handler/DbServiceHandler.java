@@ -5,7 +5,9 @@
 
 package dsl.db.converter.handler;
 
+import dsl.db.converter.object.DatabaseObject;
 import dsl.db.converter.service.DbService;
+import dsl.db.converter.utils.ExcelUtils;
 import dsl.db.converter.utils.SQLGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,23 +23,34 @@ public class DbServiceHandler implements DbService
     private DataSource dataSource;
 
     @Override
-    public void dump(String tableName, List<String> header, List<Object> row)
+    public void dump(String excelFilename)
     {
+        List<DatabaseObject> databaseObject = ExcelUtils.read(excelFilename);
         try (Connection connection = dataSource.getConnection())
         {
             connection.setAutoCommit(false);
-            String sql = SQLGenerator.generateSQL(tableName, header, row);
-
-            try (PreparedStatement statement = connection.prepareStatement(sql))
+            for(DatabaseObject dbObject : databaseObject)
             {
-                SQLGenerator.prepareStatement(statement, row);
-                statement.execute();
+                String sql = SQLGenerator.generateSQL(dbObject);
+
+                try (PreparedStatement statement = connection.prepareStatement(sql))
+                {
+                    for(List<Object> row : dbObject.getData())
+                    {
+                        SQLGenerator.prepareStatement(statement, dbObject.getDataTypes(), row);
+                        statement.execute();
+                    }
+                }
             }
             connection.commit();
         }
         catch (SQLException e)
         {
             e.printStackTrace();
+        }
+        finally
+        {
+            System.out.println("Database has been initialized");
         }
     }
 }
