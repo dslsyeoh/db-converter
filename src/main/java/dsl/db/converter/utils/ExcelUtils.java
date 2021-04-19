@@ -6,6 +6,7 @@
 package dsl.db.converter.utils;
 
 import dsl.db.converter.Main;
+import dsl.db.converter.object.DatabaseObject;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.File;
@@ -17,9 +18,12 @@ public class ExcelUtils
 {
     private ExcelUtils() {}
 
-    public static void read(String filename)
+    public static List<DatabaseObject> read(String filename)
     {
         File file = new File(Main.class.getResource(String.format("/%s", filename)).getFile());
+
+        List<DatabaseObject> dbObjects = new ArrayList<>();
+
         try(Workbook workbook = WorkbookFactory.create(file))
         {
             for(int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++)
@@ -29,28 +33,39 @@ public class ExcelUtils
                 String tableName = getTableName(sheet);
                 Map<String, String> columnsMap = getDbColumns(sheet);
                 List<List<Object>> data = getData(sheet);
+
+                if(!data.isEmpty())
+                {
+                    DatabaseObject dbObject = new DatabaseObject();
+                    dbObject.setTableName(tableName);
+                    dbObject.setColumnNames(columnsMap.keySet());
+                    dbObject.setDataTypes(new ArrayList<>(columnsMap.values()));
+                    dbObject.setData(data);
+                    dbObject.setDataSize(data.get(0).size());
+
+                    dbObjects.add(dbObject);
+                }
             }
+            return dbObjects;
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
+
+        return Collections.emptyList();
     }
 
     private static String getTableName(Sheet sheet)
     {
-        String tableName = sheet.getRow(0).getCell(0).getStringCellValue();
-
-        System.out.println("tableName: " + tableName);
-
-        return tableName;
+        return sheet.getRow(0).getCell(0).getStringCellValue();
     }
 
     private static Map<String, String> getDbColumns(Sheet sheet)
     {
         Map<String, String> columnsMap = new LinkedHashMap<>();
 
-        Row columnNameRow = sheet.getRow(findRowIdx(sheet, COLUMN_NANE_ROW_GAP));
+        Row columnNameRow = sheet.getRow(findRowIdx(sheet, COLUMN_NAME_ROW_GAP));
         Row dataTypeRow = sheet.getRow(findRowIdx(sheet, DATA_TYPE_ROW_GAP));
 
         for(int cellIdx = 0; cellIdx < columnNameRow.getLastCellNum(); cellIdx++)
@@ -62,9 +77,6 @@ public class ExcelUtils
 
             columnsMap.put(columnName, dataType);
         }
-
-        System.out.println("columnsMap: " + columnsMap);
-
         return columnsMap;
     }
 
@@ -98,7 +110,6 @@ public class ExcelUtils
 
                 if(!columnData.isEmpty()) columnsData.add(columnData);
             }
-            System.out.println("columnsData: " + columnsData);
         }
         return columnsData;
     }
