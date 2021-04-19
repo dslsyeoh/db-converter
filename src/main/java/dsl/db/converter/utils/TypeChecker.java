@@ -37,7 +37,7 @@ public final class TypeChecker
                 if(isInstantValid(value)) return INSTANT;
                 if(isValidDate(value, "yyyy-MM-dd HH:mm:ss")) return TIMESTAMP;
                 if(isValidDate(value, "yyyy-MM-dd")) return DATE;
-                return value.length() > 255 ? LONG_TEXT : value.length() == 1 ? CHARACTER : STRING;
+                return value.length() > 255 ? TEXT : value.length() == 1 ? CHAR : VARCHAR;
             }
         }
         catch (Exception e)

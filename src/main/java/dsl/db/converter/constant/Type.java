@@ -5,16 +5,26 @@
 
 package dsl.db.converter.constant;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public enum Type
 {
     BOOLEAN,
     INTEGER,
     DOUBLE,
-    CHARACTER,
-    STRING,
-    LONG_TEXT,
+    CHAR,
+    VARCHAR,
+    TEXT,
     DATE,
     TIMESTAMP,
     INSTANT,
-    BLOB
+    BLOB;
+
+    public static Type parse(String value)
+    {
+        return Arrays.stream(values())
+                .filter(type -> Objects.equals(type.name(), value.toUpperCase()))
+                .findFirst().orElse(null);
+    }
 }
